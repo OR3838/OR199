@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Auto Post</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img id="profilePic" src="https://placekitten.com/50/50" alt="Profile Picture">
+            <h1>Welcome, User</h1>
+        </div>
+
+        <div class="content">
+            <div class="left-panel">
+                <textarea id="postContent" placeholder="Write your post here..."></textarea>
+                <div id="emoji-picker">
+                    <button onclick="insertEmoji('😀')">😀</button>
+                    <button onclick="insertEmoji('😊')">😊</button>
+                    <button onclick="insertEmoji('😎')">😎</button>
+                    <!-- Add more emojis here -->
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <h3>Select Groups</h3>
+                <div id="groupList">
+                    <label><input type="checkbox" id="group1"> Group 1</label><br>
+                    <label><input type="checkbox" id="group2"> Group 2</label><br>
+                    <label><input type="checkbox" id="group3"> Group 3</label><br>
+                </div>
+                <h3>Post Interval</h3>
+                <select id="postInterval">
+                    <option value="1">Every Hour</option>
+                    <option value="2">Every 2 Hours</option>
+                    <option value="3">Every 3 Hours</option>
+                </select>
+                <button onclick="startPosting()">Start Posting</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript placed here at the bottom -->
+    <script>
+        function insertEmoji(emoji) {
+            const postContent = document.getElementById('postContent');
+            postContent.value += emoji;
+        }
+
+        function startPosting() {
+            const postContent = document.getElementById('postContent').value;
+            const selectedGroups = getSelectedGroups();
+            const interval = document.getElementById('postInterval').value;
+
+            if (postContent.trim() === '') {
+                alert('Please write something before starting the post!');
+                return;
+            }
+
+            if (selectedGroups.length === 0) {
+                alert('Please select at least one group!');
+                return;
+            }
+
+            alert(`Starting to post the content every ${interval} hour(s) in selected groups: ${selectedGroups.join(', ')}`);
+        }
+
+        function getSelectedGroups() {
+            const groups = [];
+            const groupList = document.getElementById('groupList');
+            const checkboxes = groupList.getElementsByTagName('input');
+
+            for (let checkbox of checkboxes) {
+                if (checkbox.checked) {
+                    groups.push(checkbox.id.replace('group', 'Group '));
+                }
+            }
+            return groups;
+        }
+    </script>
+</body>
+</html>
