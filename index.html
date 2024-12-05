@@ -5,12 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Facebook Auto Post</title>
     <link rel="stylesheet" href="style.css">
+
+    <!-- Facebook SDK -->
+    <script>
+        window.fbAsyncInit = function() {
+            FB.init({
+                appId      : '1094633688500228', // App ID تم استبداله هنا
+                cookie     : true,
+                xfbml      : true,
+                version    : 'v12.0' // يمكنك تعديل رقم الإصدار إذا كان هناك تحديثات
+            });
+            
+            FB.AppEvents.logPageView();   
+        };
+
+        (function(d, s, id){
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) {return;}
+            js = d.createElement(s); js.id = id;
+            js.src = "https://connect.facebook.net/en_US/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+    </script>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <img id="profilePic" src="https://placekitten.com/50/50" alt="Profile Picture">
             <h1>Welcome, User</h1>
+            <button onclick="loginWithFacebook()">Login with Facebook</button>
         </div>
 
         <div class="content">
@@ -27,9 +50,7 @@
             <div class="right-panel">
                 <h3>Select Groups</h3>
                 <div id="groupList">
-                    <label><input type="checkbox" id="group1"> Group 1</label><br>
-                    <label><input type="checkbox" id="group2"> Group 2</label><br>
-                    <label><input type="checkbox" id="group3"> Group 3</label><br>
+                    <!-- جروبات ستظهر بعد تسجيل الدخول -->
                 </div>
                 <h3>Post Interval</h3>
                 <select id="postInterval">
@@ -78,6 +99,31 @@
                 }
             }
             return groups;
+        }
+
+        // تسجيل الدخول إلى فيسبوك
+        function loginWithFacebook() {
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    console.log('Login successful');
+                    loadGroups(); // تحميل الجروبات بعد تسجيل الدخول
+                } else {
+                    console.log('Login failed');
+                }
+            }, { scope: 'public_profile,email,publish_to_groups' });
+        }
+
+        // تحميل الجروبات التي ينتمي إليها المستخدم
+        function loadGroups() {
+            FB.api('/me/groups', 'GET', { fields: 'id,name' }, function(response) {
+                if (response && !response.error) {
+                    let groupsHtml = '';
+                    response.data.forEach(group => {
+                        groupsHtml += `<label><input type="checkbox" value="${group.id}" /> ${group.name}</label><br>`;
+                    });
+                    document.getElementById('groupList').innerHTML = groupsHtml;
+                }
+            });
         }
     </script>
 </body>
