@@ -48,9 +48,9 @@
             </div>
 
             <div class="right-panel">
-                <h3>Select Pages</h3>
-                <div id="pageList">
-                    <!-- الصفحات ستظهر بعد تسجيل الدخول -->
+                <h3>Select Groups</h3>
+                <div id="groupList">
+                    <!-- الجروبات ستظهر بعد تسجيل الدخول -->
                 </div>
                 <h3>Post Interval</h3>
                 <select id="postInterval">
@@ -75,7 +75,7 @@
 
         function startPosting() {
             const postContent = document.getElementById('postContent').value;
-            const selectedPages = getSelectedPages();
+            const selectedGroups = getSelectedGroups();
             const interval = document.getElementById('postInterval').value;
 
             if (postContent.trim() === '') {
@@ -83,8 +83,8 @@
                 return;
             }
 
-            if (selectedPages.length === 0) {
-                alert('Please select at least one page!');
+            if (selectedGroups.length === 0) {
+                alert('Please select at least one group!');
                 return;
             }
 
@@ -92,30 +92,37 @@
             const intervalTime = interval * 60 * 60 * 1000; // تحويل الفترة إلى ملي ثانية
 
             // نشر المحتوى للمرة الأولى
-            postToPages(postContent, selectedPages);
+            postToGroups(postContent, selectedGroups);
 
             // النشر التلقائي باستخدام setInterval
             postingInterval = setInterval(function() {
-                postToPages(postContent, selectedPages);
+                postToGroups(postContent, selectedGroups);
             }, intervalTime);
         }
 
         function stopPosting() {
             clearInterval(postingInterval);
-            alert('Stopped automatic posting');
+            alert('Auto posting stopped!');
         }
 
-        function getSelectedPages() {
-            const pages = [];
-            const pageList = document.getElementById('pageList');
-            const checkboxes = pageList.getElementsByTagName('input');
+        function postToGroups(content, groups) {
+            groups.forEach(group => {
+                console.log(`Posting to ${group}: ${content}`);
+                // هنا يتم تنفيذ عملية النشر الفعلي عبر API
+            });
+        }
+
+        function getSelectedGroups() {
+            const groups = [];
+            const groupList = document.getElementById('groupList');
+            const checkboxes = groupList.getElementsByTagName('input');
 
             for (let checkbox of checkboxes) {
                 if (checkbox.checked) {
-                    pages.push(checkbox.id.replace('page', 'Page '));
+                    groups.push(checkbox.id.replace('group', 'Group '));
                 }
             }
-            return pages;
+            return groups;
         }
 
         // تسجيل الدخول إلى فيسبوك
@@ -123,40 +130,23 @@
             FB.login(function(response) {
                 if (response.authResponse) {
                     console.log('Login successful');
-                    loadPages(); // تحميل الصفحات بعد تسجيل الدخول
+                    loadGroups(); // تحميل الجروبات بعد تسجيل الدخول
                 } else {
                     console.log('Login failed');
                 }
-            }, { scope: 'public_profile,email,manage_pages' }); // استخدم صلاحية manage_pages
+            }, { scope: 'public_profile,email' }); // الصلاحيات الأساسية فقط
         }
 
-        // تحميل الصفحات التي يديرها المستخدم
-        function loadPages() {
-            FB.api('/me/accounts', 'GET', { fields: 'id,name' }, function(response) {
+        // تحميل الجروبات التي ينتمي إليها المستخدم
+        function loadGroups() {
+            FB.api('/me/groups', 'GET', { fields: 'id,name' }, function(response) {
                 if (response && !response.error) {
-                    let pagesHtml = '';
-                    response.data.forEach(page => {
-                        pagesHtml += `<label><input type="checkbox" id="page${page.id}" value="${page.id}" /> ${page.name}</label><br>`;
+                    let groupsHtml = '';
+                    response.data.forEach(group => {
+                        groupsHtml += `<label><input type="checkbox" value="${group.id}" /> ${group.name}</label><br>`;
                     });
-                    document.getElementById('pageList').innerHTML = pagesHtml;
-                } else {
-                    console.log('Error loading pages:', response.error);
+                    document.getElementById('groupList').innerHTML = groupsHtml;
                 }
-            });
-        }
-
-        // نشر المحتوى إلى الصفحات
-        function postToPages(postContent, selectedPages) {
-            selectedPages.forEach(page => {
-                FB.api(`/${page}/feed`, 'POST', {
-                    message: postContent
-                }, function(response) {
-                    if (response && !response.error) {
-                        console.log('Post successful to page:', page);
-                    } else {
-                        console.log('Error posting to page:', response.error);
-                    }
-                });
             });
         }
     </script>
