@@ -97,4 +97,60 @@
             // النشر التلقائي باستخدام setInterval
             postingInterval = setInterval(function() {
                 postToGroups(postContent, selectedGroups);
-            },
+            }, intervalTime);
+        }
+
+        function stopPosting() {
+            clearInterval(postingInterval); // إيقاف النشر التلقائي
+            alert('Auto posting stopped!');
+        }
+
+        function postToGroups(postContent, selectedGroups) {
+            // هنا يمكن وضع الكود الخاص بنشر المحتوى في الجروبات
+            // مبدئياً سنعرض رسالة في الكونسول كمثال
+            console.log(`Posting to groups: ${selectedGroups.join(', ')}`);
+            console.log('Post content:', postContent);
+
+            // يمكنك هنا إضافة API call إلى فيسبوك للنشر
+        }
+
+        function getSelectedGroups() {
+            const groups = [];
+            const groupList = document.getElementById('groupList');
+            const checkboxes = groupList.getElementsByTagName('input');
+
+            for (let checkbox of checkboxes) {
+                if (checkbox.checked) {
+                    groups.push(checkbox.id.replace('group', 'Group '));
+                }
+            }
+            return groups;
+        }
+
+        // تسجيل الدخول إلى فيسبوك
+        function loginWithFacebook() {
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    console.log('Login successful');
+                    loadGroups(); // تحميل الجروبات بعد تسجيل الدخول
+                } else {
+                    console.log('Login failed');
+                }
+            }, { scope: 'public_profile,email,publish_to_groups,groups_access_member_info' }); // Added permissions
+        }
+
+        // تحميل الجروبات التي ينتمي إليها المستخدم
+        function loadGroups() {
+            FB.api('/me/groups', 'GET', { fields: 'id,name' }, function(response) {
+                if (response && !response.error) {
+                    let groupsHtml = '';
+                    response.data.forEach(group => {
+                        groupsHtml += `<label><input type="checkbox" value="${group.id}" id="group${group.id}" /> ${group.name}</label><br>`;
+                    });
+                    document.getElementById('groupList').innerHTML = groupsHtml;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
