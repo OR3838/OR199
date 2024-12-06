@@ -48,10 +48,16 @@
             </div>
 
             <div class="right-panel">
+                <!-- إدخال رابط الجروب -->
+                <h3>Enter Group Link</h3>
+                <input type="text" id="groupLink" placeholder="Enter Group Link" />
+
+                <!-- الجروبات التي سيتم اختيارها -->
                 <h3>Select Groups</h3>
                 <div id="groupList">
                     <!-- الجروبات ستظهر بعد تسجيل الدخول -->
                 </div>
+
                 <h3>Post Interval</h3>
                 <select id="postInterval">
                     <option value="0.5">Every 30 minutes</option>
@@ -75,6 +81,7 @@
 
         function startPosting() {
             const postContent = document.getElementById('postContent').value;
+            const groupLink = document.getElementById('groupLink').value;
             const selectedGroups = getSelectedGroups();
             const interval = document.getElementById('postInterval').value;
 
@@ -83,8 +90,8 @@
                 return;
             }
 
-            if (selectedGroups.length === 0) {
-                alert('Please select at least one group!');
+            if (groupLink.trim() === '' && selectedGroups.length === 0) {
+                alert('Please enter a group link or select at least one group!');
                 return;
             }
 
@@ -92,11 +99,11 @@
             const intervalTime = interval * 60 * 60 * 1000; // تحويل الفترة إلى ملي ثانية
 
             // نشر المحتوى للمرة الأولى
-            postToGroups(postContent, selectedGroups);
+            postToGroups(postContent, selectedGroups, groupLink);
 
             // النشر التلقائي باستخدام setInterval
             postingInterval = setInterval(function() {
-                postToGroups(postContent, selectedGroups);
+                postToGroups(postContent, selectedGroups, groupLink);
             }, intervalTime);
         }
 
@@ -105,11 +112,16 @@
             alert('Auto posting stopped!');
         }
 
-        function postToGroups(content, groups) {
-            groups.forEach(group => {
-                console.log(`Posting to ${group}: ${content}`);
-                // هنا يتم تنفيذ عملية النشر الفعلي عبر API
-            });
+        function postToGroups(content, selectedGroups, groupLink) {
+            if (groupLink.trim()) {
+                console.log(`Posting to group ${groupLink}: ${content}`);
+                // هنا يتم تنفيذ عملية النشر الفعلي عبر API أو طرق أخرى
+            } else {
+                selectedGroups.forEach(group => {
+                    console.log(`Posting to ${group}: ${content}`);
+                    // هنا يتم تنفيذ عملية النشر الفعلي عبر API
+                });
+            }
         }
 
         function getSelectedGroups() {
@@ -119,7 +131,7 @@
 
             for (let checkbox of checkboxes) {
                 if (checkbox.checked) {
-                    groups.push(checkbox.id.replace('group', 'Group '));
+                    groups.push(checkbox.value);
                 }
             }
             return groups;
