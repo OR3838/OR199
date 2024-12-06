@@ -110,7 +110,7 @@
                 } else {
                     console.log('Login failed');
                 }
-            }, { scope: 'public_profile,email,publish_to_groups' });
+            }, { scope: 'public_profile,email,groups_access_member_info' }); // إضافة صلاحية الوصول للجروبات
         }
 
         // تحميل الجروبات التي ينتمي إليها المستخدم
@@ -119,9 +119,12 @@
                 if (response && !response.error) {
                     let groupsHtml = '';
                     response.data.forEach(group => {
-                        groupsHtml += `<label><input type="checkbox" value="${group.id}" /> ${group.name}</label><br>`;
+                        groupsHtml += `<label><input type="checkbox" value="${group.id}" id="group${group.id}" /> ${group.name}</label><br>`;
                     });
                     document.getElementById('groupList').innerHTML = groupsHtml;
+                } else {
+                    console.log('Error loading groups:', response.error);
+                    alert('حدث خطأ أثناء تحميل الجروبات');
                 }
             });
         }
