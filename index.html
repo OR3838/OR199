@@ -32,8 +32,8 @@
     <div class="container">
         <div class="header">
             <img id="profilePic" src="https://placekitten.com/50/50" alt="Profile Picture">
-            <h1>Welcome, User</h1>
-            <button onclick="loginWithFacebook()">Login with Facebook</button>
+            <h1 id="welcomeText">Welcome, User</h1>
+            <button id="loginBtn" onclick="loginWithFacebook()">Login with Facebook</button>
         </div>
 
         <div class="content">
@@ -130,11 +130,22 @@
             FB.login(function(response) {
                 if (response.authResponse) {
                     console.log('Login successful');
+                    loadUserInfo();  // Load user information after login
                     loadGroups(); // تحميل الجروبات بعد تسجيل الدخول
+                    document.getElementById('loginBtn').style.display = 'none';  // إخفاء زر الدخول
                 } else {
                     console.log('Login failed');
                 }
             }, { scope: 'public_profile,email' }); // الصلاحيات الأساسية فقط
+        }
+
+        // تحميل معلومات المستخدم بعد تسجيل الدخول
+        function loadUserInfo() {
+            FB.api('/me', 'GET', { fields: 'name' }, function(response) {
+                if (response && !response.error) {
+                    document.getElementById('welcomeText').innerHTML = `Welcome, ${response.name}`;  // عرض اسم المستخدم
+                }
+            });
         }
 
         // تحميل الجروبات التي ينتمي إليها المستخدم
