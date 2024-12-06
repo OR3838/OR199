@@ -15,8 +15,18 @@
                 xfbml      : true,
                 version    : 'v12.0' // يمكنك تعديل رقم الإصدار إذا كان هناك تحديثات
             });
-            
-            FB.AppEvents.logPageView();   
+
+            FB.AppEvents.logPageView();
+
+            // التحقق من حالة تسجيل الدخول عند تحميل SDK
+            FB.getLoginStatus(function(response) {
+                if (response.status === 'connected') {
+                    console.log('Logged in');
+                    loadGroups(); // تحميل الجروبات إذا كان المستخدم مسجل الدخول
+                } else {
+                    console.log('Not logged in');
+                }
+            });
         };
 
         (function(d, s, id){
@@ -101,17 +111,8 @@
         }
 
         function stopPosting() {
-            clearInterval(postingInterval); // إيقاف النشر التلقائي
-            alert('Auto posting stopped!');
-        }
-
-        function postToGroups(postContent, selectedGroups) {
-            // هنا يمكن وضع الكود الخاص بنشر المحتوى في الجروبات
-            // مبدئياً سنعرض رسالة في الكونسول كمثال
-            console.log(`Posting to groups: ${selectedGroups.join(', ')}`);
-            console.log('Post content:', postContent);
-
-            // يمكنك هنا إضافة API call إلى فيسبوك للنشر
+            clearInterval(postingInterval);
+            alert('Posting stopped.');
         }
 
         function getSelectedGroups() {
@@ -136,7 +137,7 @@
                 } else {
                     console.log('Login failed');
                 }
-            }, { scope: 'public_profile,email,publish_to_groups,groups_access_member_info' }); // Added permissions
+            }, { scope: 'public_profile,email,groups_access_member_info' });
         }
 
         // تحميل الجروبات التي ينتمي إليها المستخدم
@@ -149,6 +150,14 @@
                     });
                     document.getElementById('groupList').innerHTML = groupsHtml;
                 }
+            });
+        }
+
+        function postToGroups(postContent, selectedGroups) {
+            // نشر المحتوى في الجروبات المحددة
+            selectedGroups.forEach(group => {
+                console.log(`Posting to group: ${group}`);
+                // يمكنك إضافة الكود الفعلي للنشر هنا باستخدام FB.api
             });
         }
     </script>
