@@ -50,21 +50,24 @@
             <div class="right-panel">
                 <h3>Select Groups</h3>
                 <div id="groupList">
-                    <!-- جروبات ستظهر بعد تسجيل الدخول -->
+                    <!-- الجروبات ستظهر بعد تسجيل الدخول -->
                 </div>
                 <h3>Post Interval</h3>
                 <select id="postInterval">
+                    <option value="0.5">Every 30 minutes</option>
                     <option value="1">Every Hour</option>
                     <option value="2">Every 2 Hours</option>
-                    <option value="3">Every 3 Hours</option>
                 </select>
                 <button onclick="startPosting()">Start Posting</button>
+                <button onclick="stopPosting()">Stop Posting</button>
             </div>
         </div>
     </div>
 
     <!-- JavaScript placed here at the bottom -->
     <script>
+        let postingInterval;
+
         function insertEmoji(emoji) {
             const postContent = document.getElementById('postContent');
             postContent.value += emoji;
@@ -85,48 +88,13 @@
                 return;
             }
 
-            alert(`Starting to post the content every ${interval} hour(s) in selected groups: ${selectedGroups.join(', ')}`);
-        }
+            // تحديد الفترة الزمنية بناءً على الاختيار
+            const intervalTime = interval * 60 * 60 * 1000; // تحويل الفترة إلى ملي ثانية
 
-        function getSelectedGroups() {
-            const groups = [];
-            const groupList = document.getElementById('groupList');
-            const checkboxes = groupList.getElementsByTagName('input');
+            // نشر المحتوى للمرة الأولى
+            postToGroups(postContent, selectedGroups);
 
-            for (let checkbox of checkboxes) {
-                if (checkbox.checked) {
-                    groups.push(checkbox.id.replace('group', 'Group '));
-                }
-            }
-            return groups;
-        }
-
-        // تسجيل الدخول إلى فيسبوك
-        function loginWithFacebook() {
-            FB.login(function(response) {
-                if (response.authResponse) {
-                    console.log('Login successful');
-                    loadGroups(); // تحميل الجروبات بعد تسجيل الدخول
-                } else {
-                    console.log('Login failed');
-                }
-            }, { scope: 'public_profile,email,groups_access_member_info,publish_to_groups' }); // Added permission for groups
-        }
-
-        // تحميل الجروبات التي ينتمي إليها المستخدم
-        function loadGroups() {
-            FB.api('/me/groups', 'GET', { fields: 'id,name' }, function(response) {
-                if (response && !response.error) {
-                    let groupsHtml = '';
-                    response.data.forEach(group => {
-                        groupsHtml += `<label><input type="checkbox" value="${group.id}" /> ${group.name}</label><br>`;
-                    });
-                    document.getElementById('groupList').innerHTML = groupsHtml;
-                } else {
-                    console.log('Error loading groups:', response.error);
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+            // النشر التلقائي باستخدام setInterval
+            postingInterval = setInterval(function() {
+                postToGroups(postContent, selectedGroups);
+            },
