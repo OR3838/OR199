@@ -43,18 +43,13 @@
                     <button onclick="insertEmoji('😀')">😀</button>
                     <button onclick="insertEmoji('😊')">😊</button>
                     <button onclick="insertEmoji('😎')">😎</button>
-                    <!-- Add more emojis here -->
                 </div>
             </div>
 
             <div class="right-panel">
                 <h3>Select Groups</h3>
-                <div>
-                    <input type="text" id="groupLink" placeholder="Enter Group Link">
-                    <button onclick="addGroup()">Add</button>
-                </div>
                 <div id="groupList">
-                    <!-- الجروبات ستظهر هنا -->
+                    <!-- الجروبات ستظهر بعد تسجيل الدخول -->
                 </div>
                 <h3>Post Interval</h3>
                 <select id="postInterval">
@@ -64,6 +59,10 @@
                 </select>
                 <button onclick="startPosting()">Start Posting</button>
                 <button onclick="stopPosting()">Stop Posting</button>
+                <h3>Post Status</h3>
+                <div id="postStatus">
+                    <!-- نتائج النشر ستظهر هنا -->
+                </div>
             </div>
         </div>
     </div>
@@ -71,7 +70,6 @@
     <!-- JavaScript placed here at the bottom -->
     <script>
         let postingInterval;
-        let groupsData = [];
 
         function insertEmoji(emoji) {
             const postContent = document.getElementById('postContent');
@@ -113,7 +111,28 @@
         function postToGroups(content, groups) {
             groups.forEach(group => {
                 console.log(`Posting to ${group.name}: ${content}`);
-                // هنا يتم تنفيذ عملية النشر الفعلي عبر API
+                FB.api(`/${group.id}/feed`, 'POST', {
+                    message: content
+                }, function(response) {
+                    const statusContainer = document.getElementById('postStatus');
+                    if (response && !response.error) {
+                        statusContainer.innerHTML += `
+                            <div>
+                                <img src="${group.picture}" alt="${group.name}" style="width: 20px; height: 20px;"/>
+                                ${group.name} 
+                                <span style="color: green; font-weight: bold;">✔</span>
+                            </div>
+                        `;
+                    } else {
+                        statusContainer.innerHTML += `
+                            <div>
+                                <img src="${group.picture}" alt="${group.name}" style="width: 20px; height: 20px;"/>
+                                ${group.name} 
+                                <span style="color: red; font-weight: bold;">✘</span>
+                            </div>
+                        `;
+                    }
+                });
             });
         }
 
@@ -124,11 +143,12 @@
 
             for (let checkbox of checkboxes) {
                 if (checkbox.checked) {
-                    const groupId = checkbox.id.replace('group', '');
-                    const group = groupsData.find(group => group.id === groupId);
-                    if (group) {
-                        groups.push(group);
-                    }
+                    const group = {
+                        id: checkbox.value,
+                        name: checkbox.getAttribute('data-name'),
+                        picture: checkbox.getAttribute('data-picture')
+                    };
+                    groups.push(group);
                 }
             }
             return groups;
@@ -140,87 +160,41 @@
                 if (response.authResponse) {
                     console.log('Login successful');
                     loadUserInfo();  // Load user information after login
+                    loadGroups(); // تحميل الجروبات بعد تسجيل الدخول
                     document.getElementById('loginBtn').style.display = 'none';  // إخفاء زر الدخول
                 } else {
                     console.log('Login failed');
                 }
-            }, { scope: 'public_profile,email' }); // الصلاحيات الأساسية فقط
+            }, { scope: 'public_profile,email,groups_read' }); // صلاحيات أساسية وصلاحية جلب الجروبات
         }
 
         // تحميل معلومات المستخدم بعد تسجيل الدخول
         function loadUserInfo() {
-            FB.api('/me', 'GET', { fields: 'name' }, function(response) {
+            FB.api('/me', 'GET', { fields: 'name,picture' }, function(response) {
                 if (response && !response.error) {
                     document.getElementById('welcomeText').innerHTML = `Welcome, ${response.name}`;  // عرض اسم المستخدم
+                    document.getElementById('profilePic').src = response.picture.data.url;  // عرض صورة المستخدم
                 }
             });
-            loadGroups(); // تحميل الجروبات بعد تسجيل الدخول
         }
 
         // تحميل الجروبات التي ينتمي إليها المستخدم
         function loadGroups() {
             FB.api('/me/groups', 'GET', { fields: 'id,name,picture' }, function(response) {
                 if (response && !response.error) {
-                    groupsData = response.data;
                     let groupsHtml = '';
                     response.data.forEach(group => {
                         groupsHtml += `
                             <label>
-                                <input type="checkbox" id="group${group.id}" /> 
-                                <img src="${group.picture.data.url}" alt="${group.name}" width="30" height="30" /> 
+                                <input type="checkbox" value="${group.id}" data-name="${group.name}" data-picture="${group.picture.data.url}" />
+                                <img src="${group.picture.data.url}" alt="${group.name}" style="width: 20px; height: 20px;"/>
                                 ${group.name}
-                            </label><br>`;
+                            </label><br>
+                        `;
                     });
                     document.getElementById('groupList').innerHTML = groupsHtml;
                 }
             });
-        }
-
-        // إضافة جروب من الرابط المدخل
-        function addGroup() {
-            const groupLink = document.getElementById('groupLink').value.trim();
-            if (groupLink === '') {
-                alert('Please enter a valid group link!');
-                return;
-            }
-
-            const groupId = extractGroupIdFromLink(groupLink);
-            if (!groupId) {
-                alert('Invalid group link!');
-                return;
-            }
-
-            // تحقق من وجود الجروب مسبقًا
-            const existingGroup = groupsData.find(group => group.id === groupId);
-            if (existingGroup) {
-                alert('This group has already been added!');
-                return;
-            }
-
-            // إضافة الجروب إلى المجموعة المعروضة
-            const newGroup = { id: groupId, name: `Group ${groupId}`, picture: { data: { url: 'https://placekitten.com/30/30' } } };
-            groupsData.push(newGroup);
-            displayGroups();
-        }
-
-        // استخراج ID الجروب من الرابط
-        function extractGroupIdFromLink(link) {
-            const match = link.match(/facebook.com\/groups\/(\d+)/);
-            return match ? match[1] : null;
-        }
-
-        // عرض الجروبات بعد الإضافة
-        function displayGroups() {
-            let groupsHtml = '';
-            groupsData.forEach(group => {
-                groupsHtml += `
-                    <label>
-                        <input type="checkbox" id="group${group.id}" /> 
-                        <img src="${group.picture.data.url}" alt="${group.name}" width="30" height="30" /> 
-                        ${group.name}
-                    </label><br>`;
-            });
-            document.getElementById('groupList').innerHTML = groupsHtml;
         }
     </script>
 </body>
