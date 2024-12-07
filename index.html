@@ -43,6 +43,7 @@
                     <button onclick="insertEmoji('😀')">😀</button>
                     <button onclick="insertEmoji('😊')">😊</button>
                     <button onclick="insertEmoji('😎')">😎</button>
+                    <!-- Add more emojis here -->
                 </div>
             </div>
 
@@ -57,12 +58,8 @@
                     <option value="1">Every Hour</option>
                     <option value="2">Every 2 Hours</option>
                 </select>
-                <button onclick="startPosting()">Start Posting</button>
-                <button onclick="stopPosting()">Stop Posting</button>
-                <h3>Post Status</h3>
-                <div id="postStatus">
-                    <!-- نتائج النشر ستظهر هنا -->
-                </div>
+                <!-- زرار Start/Stop -->
+                <button id="startStopBtn" onclick="togglePosting()">Start Posting</button>
             </div>
         </div>
     </div>
@@ -70,13 +67,15 @@
     <!-- JavaScript placed here at the bottom -->
     <script>
         let postingInterval;
+        let isPosting = false;
 
         function insertEmoji(emoji) {
             const postContent = document.getElementById('postContent');
             postContent.value += emoji;
         }
 
-        function startPosting() {
+        // Start/Stop Toggle
+        function togglePosting() {
             const postContent = document.getElementById('postContent').value;
             const selectedGroups = getSelectedGroups();
             const interval = document.getElementById('postInterval').value;
@@ -91,6 +90,20 @@
                 return;
             }
 
+            // Toggle posting state
+            if (isPosting) {
+                stopPosting();
+            } else {
+                startPosting();
+            }
+        }
+
+        // Start posting
+        function startPosting() {
+            const postContent = document.getElementById('postContent').value;
+            const selectedGroups = getSelectedGroups();
+            const interval = document.getElementById('postInterval').value;
+
             // تحديد الفترة الزمنية بناءً على الاختيار
             const intervalTime = interval * 60 * 60 * 1000; // تحويل الفترة إلى ملي ثانية
 
@@ -101,41 +114,33 @@
             postingInterval = setInterval(function() {
                 postToGroups(postContent, selectedGroups);
             }, intervalTime);
+
+            // تغيير الزرار للون الأخضر
+            document.getElementById('startStopBtn').innerHTML = 'Stop Posting';
+            document.getElementById('startStopBtn').style.backgroundColor = 'red';
+            isPosting = true;
         }
 
+        // Stop posting
         function stopPosting() {
             clearInterval(postingInterval);
             alert('Auto posting stopped!');
+
+            // تغيير الزرار للون الأخضر
+            document.getElementById('startStopBtn').innerHTML = 'Start Posting';
+            document.getElementById('startStopBtn').style.backgroundColor = 'green';
+            isPosting = false;
         }
 
+        // نشر المحتوى للجروبات
         function postToGroups(content, groups) {
             groups.forEach(group => {
-                console.log(`Posting to ${group.name}: ${content}`);
-                FB.api(`/${group.id}/feed`, 'POST', {
-                    message: content
-                }, function(response) {
-                    const statusContainer = document.getElementById('postStatus');
-                    if (response && !response.error) {
-                        statusContainer.innerHTML += `
-                            <div>
-                                <img src="${group.picture}" alt="${group.name}" style="width: 20px; height: 20px;"/>
-                                ${group.name} 
-                                <span style="color: green; font-weight: bold;">✔</span>
-                            </div>
-                        `;
-                    } else {
-                        statusContainer.innerHTML += `
-                            <div>
-                                <img src="${group.picture}" alt="${group.name}" style="width: 20px; height: 20px;"/>
-                                ${group.name} 
-                                <span style="color: red; font-weight: bold;">✘</span>
-                            </div>
-                        `;
-                    }
-                });
+                console.log(`Posting to ${group}: ${content}`);
+                // هنا يتم تنفيذ عملية النشر الفعلي عبر API
             });
         }
 
+        // الحصول على الجروبات المختارة
         function getSelectedGroups() {
             const groups = [];
             const groupList = document.getElementById('groupList');
@@ -143,12 +148,7 @@
 
             for (let checkbox of checkboxes) {
                 if (checkbox.checked) {
-                    const group = {
-                        id: checkbox.value,
-                        name: checkbox.getAttribute('data-name'),
-                        picture: checkbox.getAttribute('data-picture')
-                    };
-                    groups.push(group);
+                    groups.push(checkbox.id.replace('group', 'Group '));
                 }
             }
             return groups;
@@ -165,32 +165,25 @@
                 } else {
                     console.log('Login failed');
                 }
-            }, { scope: 'public_profile,email,groups_read' }); // صلاحيات أساسية وصلاحية جلب الجروبات
+            }, { scope: 'public_profile,email' }); // الصلاحيات الأساسية فقط
         }
 
         // تحميل معلومات المستخدم بعد تسجيل الدخول
         function loadUserInfo() {
-            FB.api('/me', 'GET', { fields: 'name,picture' }, function(response) {
+            FB.api('/me', 'GET', { fields: 'name' }, function(response) {
                 if (response && !response.error) {
                     document.getElementById('welcomeText').innerHTML = `Welcome, ${response.name}`;  // عرض اسم المستخدم
-                    document.getElementById('profilePic').src = response.picture.data.url;  // عرض صورة المستخدم
                 }
             });
         }
 
         // تحميل الجروبات التي ينتمي إليها المستخدم
         function loadGroups() {
-            FB.api('/me/groups', 'GET', { fields: 'id,name,picture' }, function(response) {
+            FB.api('/me/groups', 'GET', { fields: 'id,name' }, function(response) {
                 if (response && !response.error) {
                     let groupsHtml = '';
                     response.data.forEach(group => {
-                        groupsHtml += `
-                            <label>
-                                <input type="checkbox" value="${group.id}" data-name="${group.name}" data-picture="${group.picture.data.url}" />
-                                <img src="${group.picture.data.url}" alt="${group.name}" style="width: 20px; height: 20px;"/>
-                                ${group.name}
-                            </label><br>
-                        `;
+                        groupsHtml += `<label><input type="checkbox" value="${group.id}" /> ${group.name}</label><br>`;
                     });
                     document.getElementById('groupList').innerHTML = groupsHtml;
                 }
