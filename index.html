@@ -48,9 +48,12 @@
             </div>
 
             <div class="right-panel">
+                <h3>Enter Group Links</h3>
+                <input type="text" id="groupLink" placeholder="Enter Group Link">
+                <button onclick="addGroup()">Add Group</button>
                 <h3>Select Groups</h3>
                 <div id="groupList">
-                    <!-- الجروبات ستظهر بعد تسجيل الدخول -->
+                    <!-- الجروبات ستظهر بعد إضافة الروابط -->
                 </div>
                 <h3>Post Interval</h3>
                 <select id="postInterval">
@@ -58,8 +61,7 @@
                     <option value="1">Every Hour</option>
                     <option value="2">Every 2 Hours</option>
                 </select>
-                <button onclick="startPosting()">Start Posting</button>
-                <button onclick="stopPosting()">Stop Posting</button>
+                <button id="startStopBtn" onclick="togglePosting()">Start Posting</button>
             </div>
         </div>
     </div>
@@ -67,13 +69,32 @@
     <!-- JavaScript placed here at the bottom -->
     <script>
         let postingInterval;
+        let isPosting = false;  // لتحديد حالة النشر
 
-        function insertEmoji(emoji) {
-            const postContent = document.getElementById('postContent');
-            postContent.value += emoji;
+        // إضافة مجموعة جديدة
+        function addGroup() {
+            const groupLink = document.getElementById('groupLink').value.trim();
+            if (groupLink === '') {
+                alert('Please enter a valid group link!');
+                return;
+            }
+
+            const groupId = groupLink; // ببساطة نستخدم الرابط كـ ID
+            const groupName = groupLink.split("/").pop(); // استخدمنا الجزء الأخير من الرابط كإسم للمجموعة
+
+            const groupDiv = document.createElement('div');
+            groupDiv.innerHTML = `
+                <label>
+                    <input type="checkbox" value="${groupId}" id="group${groupId}" />
+                    ${groupName}
+                </label><br>
+            `;
+            document.getElementById('groupList').appendChild(groupDiv);
+            document.getElementById('groupLink').value = '';  // إفراغ خانة الرابط
         }
 
-        function startPosting() {
+        // تفعيل أو إيقاف النشر
+        function togglePosting() {
             const postContent = document.getElementById('postContent').value;
             const selectedGroups = getSelectedGroups();
             const interval = document.getElementById('postInterval').value;
@@ -91,18 +112,22 @@
             // تحديد الفترة الزمنية بناءً على الاختيار
             const intervalTime = interval * 60 * 60 * 1000; // تحويل الفترة إلى ملي ثانية
 
-            // نشر المحتوى للمرة الأولى
-            postToGroups(postContent, selectedGroups);
-
-            // النشر التلقائي باستخدام setInterval
-            postingInterval = setInterval(function() {
+            if (isPosting) {
+                clearInterval(postingInterval);  // إيقاف النشر التلقائي
+                document.getElementById('startStopBtn').innerHTML = 'Start Posting';
+                isPosting = false;
+            } else {
+                // نشر المحتوى للمرة الأولى
                 postToGroups(postContent, selectedGroups);
-            }, intervalTime);
-        }
 
-        function stopPosting() {
-            clearInterval(postingInterval);
-            alert('Auto posting stopped!');
+                // النشر التلقائي باستخدام setInterval
+                postingInterval = setInterval(function() {
+                    postToGroups(postContent, selectedGroups);
+                }, intervalTime);
+
+                document.getElementById('startStopBtn').innerHTML = 'Stop Posting';
+                isPosting = true;
+            }
         }
 
         function postToGroups(content, groups) {
@@ -131,12 +156,11 @@
                 if (response.authResponse) {
                     console.log('Login successful');
                     loadUserInfo();  // Load user information after login
-                    loadGroups();    // تحميل الجروبات بعد تسجيل الدخول
                     document.getElementById('loginBtn').style.display = 'none';  // إخفاء زر الدخول
                 } else {
                     console.log('Login failed');
                 }
-            }, { scope: 'public_profile,email,user_managed_groups' });  // استبدال groups_read بـ user_managed_groups
+            }, { scope: 'public_profile,email' });  // حذف صلاحية الجروبات لأنها لم تعد مطلوبة
         }
 
         // تحميل معلومات المستخدم بعد تسجيل الدخول
@@ -148,18 +172,15 @@
             });
         }
 
-        // تحميل الجروبات التي ينتمي إليها المستخدم
-        function loadGroups() {
-            FB.api('/me/groups', 'GET', { fields: 'id,name' }, function(response) {
-                if (response && !response.error) {
-                    let groupsHtml = '';
-                    response.data.forEach(group => {
-                        groupsHtml += `<label><input type="checkbox" value="${group.id}" /> ${group.name}</label><br>`;
-                    });
-                    document.getElementById('groupList').innerHTML = groupsHtml;
+        // الحفاظ على تسجيل الدخول حتى بعد تحديث الصفحة
+        window.onload = function() {
+            FB.getLoginStatus(function(response) {
+                if (response.status === 'connected') {
+                    loadUserInfo();
+                    document.getElementById('loginBtn').style.display = 'none';  // إخفاء زر الدخول إذا كان المستخدم مسجل الدخول
                 }
             });
-        }
+        };
     </script>
 </body>
 </html>
