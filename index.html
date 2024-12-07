@@ -136,7 +136,7 @@
                 } else {
                     console.log('Login failed');
                 }
-            }, { scope: 'public_profile,email,groups_read' });  // طلب صلاحية groups_read
+            }, { scope: 'public_profile,email,user_managed_groups' });  // استبدال groups_read بـ user_managed_groups
         }
 
         // تحميل معلومات المستخدم بعد تسجيل الدخول
