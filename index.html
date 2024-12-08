@@ -1,186 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Auto Post</title>
-    <link rel="stylesheet" href="style.css">
-
-    <!-- Facebook SDK -->
-    <script>
-        window.fbAsyncInit = function() {
-            FB.init({
-                appId      : '1094633688500228', // App ID تم استبداله هنا
-                cookie     : true,
-                xfbml      : true,
-                version    : 'v12.0' // يمكنك تعديل رقم الإصدار إذا كان هناك تحديثات
-            });
-            
-            FB.AppEvents.logPageView();   
-        };
-
-        (function(d, s, id){
-            var js, fjs = d.getElementsByTagName(s)[0];
-            if (d.getElementById(id)) {return;}
-            js = d.createElement(s); js.id = id;
-            js.src = "https://connect.facebook.net/en_US/sdk.js";
-            fjs.parentNode.insertBefore(js, fjs);
-        }(document, 'script', 'facebook-jssdk'));
-    </script>
+    <title>عرض جروبات فيسبوك</title>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <img id="profilePic" src="https://placekitten.com/50/50" alt="Profile Picture">
-            <h1 id="welcomeText">Welcome, User</h1>
-            <button id="loginBtn" onclick="loginWithFacebook()">Login with Facebook</button>
-        </div>
-
-        <div class="content">
-            <div class="left-panel">
-                <textarea id="postContent" placeholder="Write your post here..."></textarea>
-                <div id="emoji-picker">
-                    <button onclick="insertEmoji('😀')">😀</button>
-                    <button onclick="insertEmoji('😊')">😊</button>
-                    <button onclick="insertEmoji('😎')">😎</button>
-                    <!-- Add more emojis here -->
-                </div>
-            </div>
-
-            <div class="right-panel">
-                <h3>Enter Group Links</h3>
-                <input type="text" id="groupLink" placeholder="Enter Group Link">
-                <button onclick="addGroup()">Add Group</button>
-                <h3>Select Groups</h3>
-                <div id="groupList">
-                    <!-- الجروبات ستظهر بعد إضافة الروابط -->
-                </div>
-                <h3>Post Interval</h3>
-                <select id="postInterval">
-                    <option value="0.5">Every 30 minutes</option>
-                    <option value="1">Every Hour</option>
-                    <option value="2">Every 2 Hours</option>
-                </select>
-                <button id="startStopBtn" onclick="togglePosting()">Start Posting</button>
-            </div>
-        </div>
+    <h1>الجروبات التي أديرها</h1>
+    <div id="groups-list">
+        <!-- سيتم عرض الجروبات هنا -->
     </div>
 
-    <!-- JavaScript placed here at the bottom -->
     <script>
-        let postingInterval;
-        let isPosting = false;  // لتحديد حالة النشر
-
-        // إضافة مجموعة جديدة
-        function addGroup() {
-            const groupLink = document.getElementById('groupLink').value.trim();
-            if (groupLink === '') {
-                alert('Please enter a valid group link!');
-                return;
-            }
-
-            const groupId = groupLink; // ببساطة نستخدم الرابط كـ ID
-            const groupName = groupLink.split("/").pop(); // استخدمنا الجزء الأخير من الرابط كإسم للمجموعة
-
-            const groupDiv = document.createElement('div');
-            groupDiv.innerHTML = `
-                <label>
-                    <input type="checkbox" value="${groupId}" id="group${groupId}" />
-                    ${groupName}
-                </label><br>
-            `;
-            document.getElementById('groupList').appendChild(groupDiv);
-            document.getElementById('groupLink').value = '';  // إفراغ خانة الرابط
-        }
-
-        // تفعيل أو إيقاف النشر
-        function togglePosting() {
-            const postContent = document.getElementById('postContent').value;
-            const selectedGroups = getSelectedGroups();
-            const interval = document.getElementById('postInterval').value;
-
-            if (postContent.trim() === '') {
-                alert('Please write something before starting the post!');
-                return;
-            }
-
-            if (selectedGroups.length === 0) {
-                alert('Please select at least one group!');
-                return;
-            }
-
-            // تحديد الفترة الزمنية بناءً على الاختيار
-            const intervalTime = interval * 60 * 60 * 1000; // تحويل الفترة إلى ملي ثانية
-
-            if (isPosting) {
-                clearInterval(postingInterval);  // إيقاف النشر التلقائي
-                document.getElementById('startStopBtn').innerHTML = 'Start Posting';
-                isPosting = false;
-            } else {
-                // نشر المحتوى للمرة الأولى
-                postToGroups(postContent, selectedGroups);
-
-                // النشر التلقائي باستخدام setInterval
-                postingInterval = setInterval(function() {
-                    postToGroups(postContent, selectedGroups);
-                }, intervalTime);
-
-                document.getElementById('startStopBtn').innerHTML = 'Stop Posting';
-                isPosting = true;
-            }
-        }
-
-        function postToGroups(content, groups) {
-            groups.forEach(group => {
-                console.log(`Posting to ${group}: ${content}`);
-                // هنا يتم تنفيذ عملية النشر الفعلي عبر API
-            });
-        }
-
-        function getSelectedGroups() {
-            const groups = [];
-            const groupList = document.getElementById('groupList');
-            const checkboxes = groupList.getElementsByTagName('input');
-
-            for (let checkbox of checkboxes) {
-                if (checkbox.checked) {
-                    groups.push(checkbox.id.replace('group', 'Group '));
-                }
-            }
-            return groups;
-        }
-
-        // تسجيل الدخول إلى فيسبوك
-        function loginWithFacebook() {
-            FB.login(function(response) {
-                if (response.authResponse) {
-                    console.log('Login successful');
-                    loadUserInfo();  // Load user information after login
-                    document.getElementById('loginBtn').style.display = 'none';  // إخفاء زر الدخول
+        // استبدل هذا برمز الوصول الذي لديك
+        var accessToken = "EAAdt11XEZA58BO9oSnYqYaxsToILLG3kh4lZBo2cBpnF3Gk5YtpuDPYy0ErGazUZAENzykQ7UtRcaHZAKzrIAGmOieonniBlI2l4MPNYce9QOFHsUkn0tctrmTYKRrGaQHjvIYyDjTouEtxwp9yYSmBeBJiS1Lyn2BnLK7cwrxXJXQMBzJIHnMDSSQ3CNwXJzZCPTetQm8rr3rYFY1FQ5W4XlcqmD";
+        
+        // استعلام لاسترجاع الجروبات التي يديرها المستخدم
+        fetch(`https://graph.facebook.com/v13.0/me/groups?access_token=${accessToken}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.data && data.data.length > 0) {
+                    var groupsList = document.getElementById("groups-list");
+                    data.data.forEach(group => {
+                        var groupElement = document.createElement("div");
+                        groupElement.innerHTML = `
+                            <h3>${group.name}</h3>
+                            <p>معرف الجروب: ${group.id}</p>
+                            <hr>
+                        `;
+                        groupsList.appendChild(groupElement);
+                    });
                 } else {
-                    console.log('Login failed');
+                    document.getElementById("groups-list").innerHTML = "لا توجد جروبات لعرضها.";
                 }
-            }, { scope: 'public_profile,email' });  // حذف صلاحية الجروبات لأنها لم تعد مطلوبة
-        }
-
-        // تحميل معلومات المستخدم بعد تسجيل الدخول
-        function loadUserInfo() {
-            FB.api('/me', 'GET', { fields: 'name' }, function(response) {
-                if (response && !response.error) {
-                    document.getElementById('welcomeText').innerHTML = `Welcome, ${response.name}`;  // عرض اسم المستخدم
-                }
+            })
+            .catch(error => {
+                console.error("حدث خطأ:", error);
             });
-        }
-
-        // الحفاظ على تسجيل الدخول حتى بعد تحديث الصفحة
-        window.onload = function() {
-            FB.getLoginStatus(function(response) {
-                if (response.status === 'connected') {
-                    loadUserInfo();
-                    document.getElementById('loginBtn').style.display = 'none';  // إخفاء زر الدخول إذا كان المستخدم مسجل الدخول
-                }
-            });
-        };
     </script>
 </body>
 </html>
